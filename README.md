@@ -118,13 +118,12 @@ The `peminjaman` table stores borrowing records and connects borrower data with 
 
 ## Application Preview
 
-Add your application screenshots here:
+application screenshots:
 
 ```md
-![Main View](screenshots/main-view.png)
-![Borrower Page](screenshots/borrower-page.png)
-![Book Page](screenshots/book-page.png)
-![Borrowing Page](screenshots/borrowing-page.png)
+![Borrower Page](Screenshots/Peminjam.png)
+![Book Page](Screenshots/Buku.png)
+![Borrowing Page](Screenshots/Peminjaman.png)
 ```
 
 ## Notes
@@ -133,4 +132,4 @@ This project focuses on implementing Object Persistence in a desktop-based Java 
 
 ## Author
 
-Created by Matthew Benedict Ezekiel Saisab.
+Created by Beda Arya Wimala.
