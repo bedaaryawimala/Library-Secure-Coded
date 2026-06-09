@@ -120,11 +120,9 @@ The `peminjaman` table stores borrowing records and connects borrower data with 
 
 application screenshots:
 
-```md
 ![Borrower Page](Screenshots/Peminjam.png)
 ![Book Page](Screenshots/Buku.png)
 ![Borrowing Page](Screenshots/Peminjaman.png)
-```
 
 ## Notes
 
