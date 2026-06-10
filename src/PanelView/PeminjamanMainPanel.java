@@ -1,8 +1,9 @@
 package PanelView;
 
-import Dao.BukuDAOE;
-import Dao.PeminjamDAOE;
-import Dao.PeminjamanDAO;
+import Controller.BukuControllerE;
+import Controller.PeminjamControllerE;
+import Controller.PeminjamanController;
+import Exception.InputKosongException;
 import Model.BukuE;
 import Model.PeminjamE;
 import Model.Peminjaman;
@@ -45,19 +46,18 @@ public class PeminjamanMainPanel extends JPanel {
     private JButton btnBatalkan;
 
     private JTable TablePeminjaman;
-    private PeminjamanDAO peminjamanDAO;
-    private PeminjamDAOE peminjamDAOE;
-    private BukuDAOE bukuDAOE;
+    private PeminjamanController peminjamanController;
+    private PeminjamControllerE peminjamControllerE;
+    private BukuControllerE bukuControllerE;
     private List<Peminjaman> listPeminjaman;
     private Integer selectedId;
-    private boolean isUpdate;
 
     public PeminjamanMainPanel() {
         setLayout(null);
         setBackground(Color.WHITE);
-        peminjamanDAO = new PeminjamanDAO();
-        peminjamDAOE = new PeminjamDAOE();
-        bukuDAOE = new BukuDAOE();
+        peminjamanController = new PeminjamanController();
+        peminjamControllerE = new PeminjamControllerE();
+        bukuControllerE = new BukuControllerE();
         listPeminjaman = new ArrayList<>();
         initComponents();
         loadDropdown();
@@ -172,48 +172,79 @@ public class PeminjamanMainPanel extends JPanel {
                 setSelectedData();
             }
         });
+        updateButtonState();
     }
 
     private void loadDropdown() {
         comboPeminjam.removeAllItems();
-        for (PeminjamE p : peminjamDAOE.IShowForDropdown()) {
+        for (PeminjamE p : peminjamControllerE.showListPeminjam()) {
             comboPeminjam.addItem(p);
         }
 
         comboBuku.removeAllItems();
-        for (BukuE b : bukuDAOE.IShowForDropdown()) {
+        for (BukuE b : bukuControllerE.showListBuku()) {
             comboBuku.addItem(b);
         }
     }
 
     private void loadData(String keyword) {
-        listPeminjaman = peminjamanDAO.showData(keyword == null ? "" : keyword.trim());
+        selectedId = null;
+        listPeminjaman = peminjamanController.showDataPeminjaman(keyword == null ? "" : keyword.trim());
         TablePeminjaman.setModel(new TablePeminjaman(listPeminjaman));
+        updateButtonState();
     }
 
     private void saveData() {
+        try {
+            peminjamanController.insertDataPeminjaman(getPeminjamanFromInput());
+            clearForm();
+            loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+
+    private Peminjaman getPeminjamanFromInput() throws InputKosongException {
         PeminjamE peminjam = (PeminjamE) comboPeminjam.getSelectedItem();
         BukuE buku = (BukuE) comboBuku.getSelectedItem();
+        String genre = getSelectedGenre();
+        String wilayah = getSelectedWilayah();
+        String tanggalMeminjam = inputTanggalMeminjam.getText().trim();
+        String tanggalMengembalikan = inputTanggalMengembalikan.getText().trim();
 
         if (peminjam == null || buku == null) {
-            JOptionPane.showMessageDialog(this, "Peminjam dan buku harus dipilih.");
-            return;
+            throw new IllegalArgumentException("Peminjam dan buku harus dipilih.");
         }
 
-        Peminjaman peminjaman = new Peminjaman(
+        if (genre.isEmpty() || wilayah.isEmpty() || tanggalMeminjam.isEmpty() || tanggalMengembalikan.isEmpty()) {
+            throw new InputKosongException();
+        }
+
+        LocalDate tanggalPinjam;
+        LocalDate tanggalKembali;
+        try {
+            tanggalPinjam = LocalDate.parse(tanggalMeminjam, dateFormatter);
+            tanggalKembali = LocalDate.parse(tanggalMengembalikan, dateFormatter);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Format tanggal harus yyyy-MM-dd.");
+        }
+
+        if (tanggalKembali.isBefore(tanggalPinjam)) {
+            throw new IllegalArgumentException("Tanggal mengembalikan tidak boleh sebelum tanggal meminjam.");
+        }
+
+        return new Peminjaman(
                 peminjam.getId_peminjam(),
                 buku.getId_buku(),
-                getSelectedGenre(),
-                getSelectedWilayah(),
-                inputTanggalMeminjam.getText(),
-                inputTanggalMengembalikan.getText(),
+                genre,
+                wilayah,
+                tanggalMeminjam,
+                tanggalMengembalikan,
                 peminjam,
                 buku
         );
-
-        peminjamanDAO.insert(peminjaman);
-        clearForm();
-        loadData("");
     }
 
     private void updateData() {
@@ -226,28 +257,15 @@ public class PeminjamanMainPanel extends JPanel {
             return;
         }
 
-        PeminjamE peminjam = (PeminjamE) comboPeminjam.getSelectedItem();
-        BukuE buku = (BukuE) comboBuku.getSelectedItem();
-
-        if (peminjam == null || buku == null) {
-            JOptionPane.showMessageDialog(this, "Peminjam dan buku harus dipilih.");
-            return;
+        try {
+            peminjamanController.updatePeminjaman(getPeminjamanFromInput(), selectedId);
+            clearForm();
+            loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
-
-        Peminjaman peminjaman = new Peminjaman(
-                peminjam.getId_peminjam(),
-                buku.getId_buku(),
-                getSelectedGenre(),
-                getSelectedWilayah(),
-                inputTanggalMeminjam.getText(),
-                inputTanggalMengembalikan.getText(),
-                peminjam,
-                buku
-        );
-
-        peminjamanDAO.update(peminjaman, selectedId.toString());
-        clearForm();
-        loadData("");
     }
 
     private void setSelectedData() {
@@ -264,7 +282,7 @@ public class PeminjamanMainPanel extends JPanel {
         setSelectedWilayah(peminjaman.getWilayah());
         inputTanggalMeminjam.setText(peminjaman.getTanggal_meminjam());
         inputTanggalMengembalikan.setText(peminjaman.getTanggal_mengembalikan());
-        isUpdate = true;
+        updateButtonState();
     }
 
     private void selectPeminjam(int idPeminjam) {
@@ -291,7 +309,7 @@ public class PeminjamanMainPanel extends JPanel {
         }
 
         if (selectedId != null) {
-            peminjamanDAO.delete(selectedId.toString());
+            peminjamanController.deletePeminjaman(selectedId);
             clearForm();
             loadData("");
         } else {
@@ -301,7 +319,6 @@ public class PeminjamanMainPanel extends JPanel {
 
     private void clearForm() {
         selectedId = null;
-        isUpdate = false;
         if (comboPeminjam.getItemCount() > 0) {
             comboPeminjam.setSelectedIndex(0);
         }
@@ -316,6 +333,13 @@ public class PeminjamanMainPanel extends JPanel {
         inputTanggalMeminjam.setText("");
         inputTanggalMengembalikan.setText("");
         TablePeminjaman.clearSelection();
+        updateButtonState();
+    }
+
+    private void updateButtonState() {
+        boolean hasSelection = selectedId != null;
+        btnBarukan.setEnabled(hasSelection);
+        btnHapus.setEnabled(hasSelection);
     }
 
     private JLabel createLabel(String text, int x, int y) {

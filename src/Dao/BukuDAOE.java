@@ -14,20 +14,18 @@ import java.sql.*;
 public class BukuDAOE extends Dao.BukuDAO implements IShowForDropdown<BukuE>{
 
     @Override
-    public List<BukuE> IShowForDropdown()
+    public List<BukuE> showForDropdown()
     {
-        con = dbCon.makeConnection();
-
         String sql = "SELECT buku.*, komik.ilustrator, novel.cover FROM buku\n" +
                 "LEFT JOIN komik ON buku.id_buku = komik.id_buku\n" +
                 "LEFT JOIN novel ON buku.id_buku = novel.id_buku;";
         System.out.println("Fetching Data...");
 
-        List<BukuE> list = new ArrayList();
+        List<BukuE> list = new ArrayList<>();
 
-        try{
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
             BukuE b = null;
 
             if(rs!=null)
@@ -52,15 +50,11 @@ public class BukuDAOE extends Dao.BukuDAO implements IShowForDropdown<BukuE>{
                     }
                     list.add(b);
                 }
-                rs.close();
-                statement.close();
             }
 
         }catch(Exception e){
             System.out.println("Error Fetching data...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
         return list;
     }
 }

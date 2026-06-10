@@ -3,5 +3,9 @@ package InterfaceDao;
 import java.util.List;
 
 public interface IShowForDropdown<X> {
-    public List<X> IShowForDropdown();
+    public List<X> showForDropdown();
+
+    default List<X> IShowForDropdown() {
+        return showForDropdown();
+    }
 }

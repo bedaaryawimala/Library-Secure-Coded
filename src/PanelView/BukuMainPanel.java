@@ -1,8 +1,10 @@
 package PanelView;
 
-import Dao.BukuDAO;
-import Dao.KomikDAO;
-import Dao.NovelDAO;
+import Controller.BukuController;
+import Controller.KomikController;
+import Controller.NovelController;
+import Exception.InputKosongException;
+import Exception.InputSpecialAtributeException;
 import Model.Buku;
 import Model.Komik;
 import Model.Novel;
@@ -10,6 +12,7 @@ import Model.Novel;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.Year;
 import java.util.List;
 
 public class BukuMainPanel extends JPanel {
@@ -33,18 +36,17 @@ public class BukuMainPanel extends JPanel {
     private JTable tableKomik;
     private DefaultTableModel modelNovel;
     private DefaultTableModel modelKomik;
-    private BukuDAO bukuDAO;
-    private NovelDAO novelDAO;
-    private KomikDAO komikDAO;
+    private BukuController bukuController;
+    private NovelController novelController;
+    private KomikController komikController;
     private String selectedId;
-    private boolean isUpdate;
 
     public BukuMainPanel() {
         setLayout(null);
         setBackground(Color.WHITE);
-        bukuDAO = new BukuDAO();
-        novelDAO = new NovelDAO();
-        komikDAO = new KomikDAO();
+        bukuController = new BukuController();
+        novelController = new NovelController();
+        komikController = new KomikController();
         initComponents();
         loadData("");
     }
@@ -73,6 +75,7 @@ public class BukuMainPanel extends JPanel {
         add(labelId);
 
         inputIdBuku = createTextField(25, 215, 270, 35);
+        inputIdBuku.setEditable(false);
         add(inputIdBuku);
 
         JLabel labelTahun = createLabel("Tahun Terbit", 350, 190);
@@ -143,13 +146,16 @@ public class BukuMainPanel extends JPanel {
                 setSelectedDataFromTable(tableKomik, modelKomik, "komik");
             }
         });
+        updateButtonState();
     }
 
     private void loadData(String keyword) {
+        selectedId = null;
         modelNovel.setRowCount(0);
         modelKomik.setRowCount(0);
-        addBukuRows(bukuDAO.showData("novel"), modelNovel, keyword);
-        addBukuRows(bukuDAO.showData("komik"), modelKomik, keyword);
+        addBukuRows(bukuController.showDataBuku("novel"), modelNovel, keyword);
+        addBukuRows(bukuController.showDataBuku("komik"), modelKomik, keyword);
+        updateButtonState();
     }
 
     private void addBukuRows(List<Buku> list, DefaultTableModel model, String keyword) {
@@ -170,24 +176,27 @@ public class BukuMainPanel extends JPanel {
     private void saveData() {
         try {
             String jenis = comboJenisBuku.getSelectedItem().toString();
-            String id = inputIdBuku.getText().trim();
-            if (id.isEmpty()) {
-                id = "B" + bukuDAO.generateId();
-            }
-
-            int tahunTerbit = Integer.parseInt(inputTahunTerbit.getText());
+            validateBukuInput(jenis);
+            String id = bukuController.generateId();
+            int tahunTerbit = Integer.parseInt(inputTahunTerbit.getText().trim());
             if (jenis.equals("novel")) {
-                Novel novel = new Novel(inputCover.getText(), id, inputJudul.getText(), jenis, tahunTerbit);
-                novelDAO.insert(novel);
+                Novel novel = new Novel(inputCover.getText().trim(), id, inputJudul.getText().trim(), jenis, tahunTerbit);
+                novelController.insertDataBuku(novel);
             } else {
-                Komik komik = new Komik(inputCover.getText(), id, inputJudul.getText(), jenis, tahunTerbit);
-                komikDAO.insert(komik);
+                Komik komik = new Komik(inputCover.getText().trim(), id, inputJudul.getText().trim(), jenis, tahunTerbit);
+                komikController.insertDataBuku(komik);
             }
 
             clearForm();
             loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (InputSpecialAtributeException e) {
+            JOptionPane.showMessageDialog(this, e.message(comboJenisBuku.getSelectedItem().toString()));
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Tahun terbit harus berupa angka.");
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
 
@@ -203,20 +212,47 @@ public class BukuMainPanel extends JPanel {
 
         try {
             String jenis = comboJenisBuku.getSelectedItem().toString();
-            int tahunTerbit = Integer.parseInt(inputTahunTerbit.getText());
+            validateBukuInput(jenis);
+            int tahunTerbit = Integer.parseInt(inputTahunTerbit.getText().trim());
 
             if (jenis.equals("novel")) {
-                Novel novel = new Novel(inputCover.getText(), inputIdBuku.getText(), inputJudul.getText(), jenis, tahunTerbit);
-                novelDAO.update(novel, selectedId, inputCover.getText());
+                Novel novel = new Novel(inputCover.getText().trim(), selectedId, inputJudul.getText().trim(), jenis, tahunTerbit);
+                novelController.updateDataBuku(novel);
             } else {
-                Komik komik = new Komik(inputCover.getText(), inputIdBuku.getText(), inputJudul.getText(), jenis, tahunTerbit);
-                komikDAO.update(komik, selectedId, inputCover.getText());
+                Komik komik = new Komik(inputCover.getText().trim(), selectedId, inputJudul.getText().trim(), jenis, tahunTerbit);
+                komikController.updateDataBuku(komik);
             }
 
             clearForm();
             loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (InputSpecialAtributeException e) {
+            JOptionPane.showMessageDialog(this, e.message(comboJenisBuku.getSelectedItem().toString()));
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Tahun terbit harus berupa angka.");
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+
+    private void validateBukuInput(String jenis) throws InputKosongException, InputSpecialAtributeException {
+        String judul = inputJudul.getText().trim();
+        String tahun = inputTahunTerbit.getText().trim();
+        String special = inputCover.getText().trim();
+
+        if (judul.isEmpty() || tahun.isEmpty()) {
+            throw new InputKosongException();
+        }
+
+        if (special.isEmpty()) {
+            throw new InputSpecialAtributeException();
+        }
+
+        int tahunTerbit = Integer.parseInt(tahun);
+        int tahunSekarang = Year.now().getValue();
+        if (tahunTerbit < 1000 || tahunTerbit > tahunSekarang) {
+            throw new IllegalArgumentException("Tahun terbit harus di antara 1000 sampai " + tahunSekarang + ".");
         }
     }
 
@@ -240,7 +276,7 @@ public class BukuMainPanel extends JPanel {
         inputTahunTerbit.setText(model.getValueAt(selectedRow, 2).toString());
         inputCover.setText(model.getValueAt(selectedRow, 3).toString());
         comboJenisBuku.setSelectedItem(jenis);
-        isUpdate = true;
+        updateButtonState();
 
         if (jenis.equals("novel")) {
             tableKomik.clearSelection();
@@ -255,9 +291,7 @@ public class BukuMainPanel extends JPanel {
         }
 
         if (selectedId != null) {
-            novelDAO.deleteoldRole(selectedId);
-            komikDAO.deleteoldRole(selectedId);
-            bukuDAO.delete(selectedId);
+            bukuController.deleteDataBuku(selectedId);
             clearForm();
             loadData("");
         } else {
@@ -267,13 +301,19 @@ public class BukuMainPanel extends JPanel {
 
     private void clearForm() {
         selectedId = null;
-        isUpdate = false;
         inputIdBuku.setText("");
         inputJudul.setText("");
         inputTahunTerbit.setText("");
         inputCover.setText("");
         tableNovel.clearSelection();
         tableKomik.clearSelection();
+        updateButtonState();
+    }
+
+    private void updateButtonState() {
+        boolean hasSelection = selectedId != null;
+        btnBarukan.setEnabled(hasSelection);
+        btnHapus.setEnabled(hasSelection);
     }
 
     private JLabel createLabel(String text, int x, int y) {

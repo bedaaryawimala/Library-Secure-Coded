@@ -1,8 +1,9 @@
 package Dao;
 import Model.PeminjamE;
 import InterfaceDao.IShowForDropdown;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -12,17 +13,15 @@ import java.util.List;
 public class PeminjamDAOE extends Dao.PeminjamDAO implements IShowForDropdown<PeminjamE> {
 
     @Override
-    public List<PeminjamE> IShowForDropdown()
+    public List<PeminjamE> showForDropdown()
     {
-        con = dbCon.makeConnection();
-
         String sql = "SELECT * FROM peminjam";
         System.out.println("Fetching Data...");
-        List<PeminjamE> c =new ArrayList();
+        List<PeminjamE> c = new ArrayList<>();
 
-        try{
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
 
             if(rs != null)
             {
@@ -34,14 +33,10 @@ public class PeminjamDAOE extends Dao.PeminjamDAO implements IShowForDropdown<Pe
                             rs.getInt("umur"),
                             rs.getString("notelp")));
                 }
-                rs.close();
-                statement.close();
             }
         }catch(Exception e){
             System.out.println("Error Fetching data...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
         return c;
     }
 }

@@ -7,31 +7,25 @@ import java.sql.DriverManager;
  */
 public class DBConnection {
 
-    public static Connection CON;
     public static final String URL = "jdbc:mysql://";
     public static final String DBNAME = "op2_tipe_b";
     public static final String PATH = "localhost:3306/" + DBNAME;
+    private static final String DB_USER = System.getenv().getOrDefault("LIBRARY_DB_USER", "root");
+    private static final String DB_PASSWORD = System.getenv().getOrDefault("LIBRARY_DB_PASSWORD", "");
 
     public Connection makeConnection() {
         System.out.println("Opening database...");
         try {
-            CON = DriverManager.getConnection(URL + PATH, "root", "");
+            Connection con = DriverManager.getConnection(URL + PATH, DB_USER, DB_PASSWORD);
             System.out.println("success...");
+            return con;
         } catch (Exception e) {
             System.out.println("error opening database");
-            System.out.println(e);
+            throw new IllegalStateException("Database tidak bisa dibuka.", e);
         }
-        return CON;
     }
 
     public void closeConnection() {
-        System.out.println("closing database...");
-        try {
-            CON.close();
-            System.out.println("success...");
-        } catch (Exception e) {
-            System.out.println("error closing database");
-            System.out.println(e);
-        }
+        System.out.println("Connection ditutup otomatis oleh try-with-resources.");
     }
 }

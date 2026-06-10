@@ -10,38 +10,34 @@ import Model.Peminjam;
  */
 public class PeminjamDAO implements IDAO<Peminjam, Integer>{
     protected DBConnection dbCon = new DBConnection();
-    protected Connection con;
 
     @Override
     public void insert(Peminjam p) {
-        con = dbCon.makeConnection();
-        String sql = "INSERT INTO `peminjam` (`nama`, `umur`, `notelp`) " + "VALUES ('"
-                + p.getNama() + "', '" + p.getUmur() + "', '" + p.getNotelp() + "')";
+        String sql = "INSERT INTO `peminjam` (`nama`, `umur`, `notelp`) VALUES (?, ?, ?)";
 
         System.out.println("Adding peminjam...");
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
-            statement.close();
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, p.getNama());
+            statement.setInt(2, p.getUmur());
+            statement.setString(3, p.getNotelp());
+            int result = statement.executeUpdate();
             System.out.println("Added " + result + " peminjam");
         } catch (Exception e) {
             System.out.println("Error adding peminjam...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     @Override
     public Peminjam search(Integer id_peminjam) {
-        con = dbCon.makeConnection();
-
-        String sql = "SELECT * FROM peminjam WHERE id_peminjam='" + id_peminjam + "'";
+        String sql = "SELECT * FROM peminjam WHERE id_peminjam = ?";
         System.out.println("Searching peminjam...");
         Peminjam p = null;
 
-        try {
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, id_peminjam);
+            ResultSet rs = statement.executeQuery();
 
             if(rs!=null){
                 while (rs.next()) {
@@ -51,28 +47,23 @@ public class PeminjamDAO implements IDAO<Peminjam, Integer>{
                             , rs.getString("notelp"));
                 }
                 rs.close();
-                statement.close();
             }
 
         } catch (Exception e) {
             System.out.println("Error Fetching data...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
         return p;
     }
 
     @Override
     public List<Peminjam> showData(Integer data) {
-        con = dbCon.makeConnection();
-
         String sql = "SELECT * FROM peminjam";
         System.out.println("Fetching Data...");
         List<Peminjam> p = new ArrayList<>();
 
-        try {
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
 
             if(rs!=null)
             {
@@ -82,52 +73,44 @@ public class PeminjamDAO implements IDAO<Peminjam, Integer>{
                             ,rs.getInt("umur")
                             , rs.getString("notelp")));
                 }
-                rs.close();
-                statement.close();
             }
 
         } catch (Exception e) {
             System.out.println("Error Fetching data...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
         return p;
     }
 
     @Override
     public void update(Peminjam p, Integer id_peminjam) {
-        con = dbCon.makeConnection();
-        String sql = "UPDATE `peminjam` SET " + "`nama` = '" + p.getNama() + "',"+ "`umur` = '" + p.getUmur()
-                + "',"+ "`notelp` = '" + p.getNotelp() + "' " + "WHERE `id_peminjam` = '" + id_peminjam + "'";
+        String sql = "UPDATE `peminjam` SET `nama` = ?, `umur` = ?, `notelp` = ? WHERE `id_peminjam` = ?";
 
         System.out.println("Updating peminjam");
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, p.getNama());
+            statement.setInt(2, p.getUmur());
+            statement.setString(3, p.getNotelp());
+            statement.setInt(4, id_peminjam);
+            int result = statement.executeUpdate();
             System.out.println("Edited " + result + " peminjam " + id_peminjam);
-            statement.close();
         } catch (Exception e) {
             System.out.println("Error Updating peminjam...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     @Override
     public void delete(Integer id_peminjam) {
-        con = dbCon.makeConnection();
-        String sql = "DELETE FROM `peminjam` WHERE `id_peminjam` = " + id_peminjam + "";
+        String sql = "DELETE FROM `peminjam` WHERE `id_peminjam` = ?";
         System.out.println("Deleting peminjam...");
 
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, id_peminjam);
+            int result = statement.executeUpdate();
             System.out.println("Edited " + result + " peminjam " + id_peminjam);
-            statement.close();
         } catch (Exception e) {
             System.out.println("Error Updating peminjam...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 }

@@ -1,6 +1,8 @@
 package PanelView;
 
-import Dao.PeminjamDAO;
+import Controller.PeminjamController;
+import Exception.InputKosongException;
+import Exception.NoTeleponException;
 import Model.Peminjam;
 
 import javax.swing.*;
@@ -24,14 +26,13 @@ public class PeminjamMainPanel extends JPanel {
 
     private JTable tablePeminjam;
     private DefaultTableModel tableModel;
-    private PeminjamDAO peminjamDAO;
+    private PeminjamController peminjamController;
     private Integer selectedId;
-    private boolean isUpdate;
 
     public PeminjamMainPanel() {
         setLayout(null);
         setBackground(Color.WHITE);
-        peminjamDAO = new PeminjamDAO();
+        peminjamController = new PeminjamController();
         initComponents();
         loadData("");
     }
@@ -108,11 +109,13 @@ public class PeminjamMainPanel extends JPanel {
                 setSelectedData();
             }
         });
+        updateButtonState();
     }
 
     private void loadData(String keyword) {
+        selectedId = null;
         tableModel.setRowCount(0);
-        List<Peminjam> list = peminjamDAO.showData(0);
+        List<Peminjam> list = peminjamController.showDataPeminjam();
 
         for (Peminjam p : list) {
             if (keyword == null || keyword.trim().isEmpty()
@@ -126,15 +129,22 @@ public class PeminjamMainPanel extends JPanel {
                 });
             }
         }
+        updateButtonState();
     }
 
     private void saveData() {
         try {
-            peminjamDAO.insert(getPeminjamFromInput());
+            peminjamController.insertDataPeminjam(getPeminjamFromInput());
             clearForm();
             loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (NoTeleponException e) {
+            JOptionPane.showMessageDialog(this, e.message());
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Umur harus berupa angka.");
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
 
@@ -149,19 +159,42 @@ public class PeminjamMainPanel extends JPanel {
         }
 
         try {
-            peminjamDAO.update(getPeminjamFromInput(), selectedId);
+            peminjamController.updateDataPeminjam(getPeminjamFromInput(), selectedId);
             clearForm();
             loadData("");
+        } catch (InputKosongException e) {
+            JOptionPane.showMessageDialog(this, e.message());
+        } catch (NoTeleponException e) {
+            JOptionPane.showMessageDialog(this, e.message());
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Umur harus berupa angka.");
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
 
-    private Peminjam getPeminjamFromInput() {
+    private Peminjam getPeminjamFromInput() throws InputKosongException, NoTeleponException {
+        String nama = inputNama.getText().trim();
+        String umurText = inputUmur.getText().trim();
+        String noTelp = inputNoTelp.getText().trim();
+
+        if (nama.isEmpty() || umurText.isEmpty() || noTelp.isEmpty()) {
+            throw new InputKosongException();
+        }
+
+        int umur = Integer.parseInt(umurText);
+        if (umur < 1 || umur > 120) {
+            throw new IllegalArgumentException("Umur harus di antara 1 sampai 120.");
+        }
+
+        if (!noTelp.matches("\\+?\\d{5,14}")) {
+            throw new NoTeleponException();
+        }
+
         return new Peminjam(
-                inputNama.getText(),
-                Integer.parseInt(inputUmur.getText()),
-                inputNoTelp.getText()
+                nama,
+                umur,
+                noTelp
         );
     }
 
@@ -175,7 +208,7 @@ public class PeminjamMainPanel extends JPanel {
         inputNama.setText(tableModel.getValueAt(selectedRow, 1).toString());
         inputUmur.setText(tableModel.getValueAt(selectedRow, 2).toString());
         inputNoTelp.setText(tableModel.getValueAt(selectedRow, 3).toString());
-        isUpdate = true;
+        updateButtonState();
     }
 
     private void deleteData() {
@@ -184,7 +217,7 @@ public class PeminjamMainPanel extends JPanel {
         }
 
         if (selectedId != null) {
-            peminjamDAO.delete(selectedId);
+            peminjamController.deleteDataPeminjam(selectedId);
             clearForm();
             loadData("");
         } else {
@@ -194,11 +227,17 @@ public class PeminjamMainPanel extends JPanel {
 
     private void clearForm() {
         selectedId = null;
-        isUpdate = false;
         inputNama.setText("");
         inputUmur.setText("");
         inputNoTelp.setText("");
         tablePeminjam.clearSelection();
+        updateButtonState();
+    }
+
+    private void updateButtonState() {
+        boolean hasSelection = selectedId != null;
+        btnBarukan.setEnabled(hasSelection);
+        btnHapus.setEnabled(hasSelection);
     }
 
     private JLabel createLabel(String text, int x, int y) {

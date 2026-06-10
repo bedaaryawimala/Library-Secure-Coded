@@ -2,8 +2,8 @@ package Dao;
 import Connection.DBConnection;
 import InterfaceDao.IDAO;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import Model.*;
@@ -13,37 +13,34 @@ import Model.*;
  */
 public class PeminjamanDAO implements IDAO<Peminjaman, String>{
     protected DBConnection dbCon = new DBConnection();
-    protected Connection con;
 
 
     @Override
     public void insert(Peminjaman p)
     {
-        con = dbCon.makeConnection();
-
         String sql = "INSERT INTO `peminjaman` "
                 + "(`id_peminjam`, `id_buku`, `tanggal_peminjaman`, `tanggal_pengembalian`, `wilayah`, `genre`)"
                 + " VALUES "
-                + "('" + p.getId_Peminjam() + "', '" + p.getId_Buku() + "', '" + p.getTanggal_meminjam() + "', '"
-                + p.getTanggal_mengembalikan() + "', '" + p.getWilayah() + "', '" + p.getGenre() + "')";
+                + "(?, ?, ?, ?, ?, ?)";
         System.out.println("Adding Peminjaman...");
 
-        try{
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, p.getId_Peminjam());
+            statement.setString(2, p.getId_Buku());
+            statement.setString(3, p.getTanggal_meminjam());
+            statement.setString(4, p.getTanggal_mengembalikan());
+            statement.setString(5, p.getWilayah());
+            statement.setString(6, p.getGenre());
+            int result = statement.executeUpdate();
             System.out.println("Added " + result + " Peminjaman");
-            statement.close();
         }catch(Exception e){
             System.out.println("Error adding Peminjaman");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     @Override
     public List<Peminjaman> showData(String query){
-        con = dbCon.makeConnection();
-
         String sql = "SELECT PJ.id_peminjaman, PJ.id_peminjam, PJ.id_buku, PJ.tanggal_peminjaman, "
                 + "PJ.tanggal_pengembalian, PJ.wilayah, PJ.genre, "
                 + "P.nama, P.umur, P.notelp, "
@@ -53,16 +50,18 @@ public class PeminjamanDAO implements IDAO<Peminjaman, String>{
                 + "JOIN buku B ON PJ.id_buku = B.id_buku "
                 + "LEFT JOIN komik K ON B.id_buku = K.id_buku "
                 + "LEFT JOIN novel N ON B.id_buku = N.id_buku "
-                + "WHERE (P.nama LIKE '%" + query + "%' "
-                + "OR B.judul LIKE '%" + query + "%');";
+                + "WHERE (P.nama LIKE ? OR B.judul LIKE ?)";
 
         System.out.println("Mengambil data PeminjamanBuku...");
         List<Peminjaman> listPeminjaman= new ArrayList<>();
         BukuE be = null;
 
-        try{
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            String keyword = "%" + query + "%";
+            statement.setString(1, keyword);
+            statement.setString(2, keyword);
+            ResultSet rs = statement.executeQuery();
 
             if(rs != null){
                 while(rs.next()){
@@ -104,63 +103,56 @@ public class PeminjamanDAO implements IDAO<Peminjaman, String>{
                     listPeminjaman.add(PJ);
                 }
                 rs.close();
-                statement.close();
             }
 
         }catch(Exception e){
             System.out.println("Error Fetching data...");
-            System.out.println(e);
         }
         System.out.println("Berhasil");
-        dbCon.closeConnection();
         return listPeminjaman;
     }
 
     @Override
     public void update(Peminjaman pj, String id) {
-        con = dbCon.makeConnection();
-
         String sql = "UPDATE `peminjaman` SET "
-                + "`id_peminjam`= '" + pj.getId_Peminjam() + "', `id_buku`= '" + pj.getId_Buku() + "', `genre`= '" + pj.getGenre() + "', "
-                + "`wilayah`= '" + pj.getWilayah() + "', `tanggal_peminjaman`= '" + pj.getTanggal_meminjam() + "', "
-                + "`tanggal_pengembalian` = '" + pj.getTanggal_mengembalikan() + "' "
-                + "WHERE `id_peminjaman` = '" + id + "'";
+                + "`id_peminjam`= ?, `id_buku`= ?, `genre`= ?, "
+                + "`wilayah`= ?, `tanggal_peminjaman`= ?, "
+                + "`tanggal_pengembalian` = ? "
+                + "WHERE `id_peminjaman` = ?";
 
         System.out.println("Editing Peminjaman Buku...");
 
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, pj.getId_Peminjam());
+            statement.setString(2, pj.getId_Buku());
+            statement.setString(3, pj.getGenre());
+            statement.setString(4, pj.getWilayah());
+            statement.setString(5, pj.getTanggal_meminjam());
+            statement.setString(6, pj.getTanggal_mengembalikan());
+            statement.setString(7, id);
+            int result = statement.executeUpdate();
             System.out.println("Edited " + result + " Peminjaman" + id);
-            statement.close();
         } catch (Exception e) {
             System.out.println("Error Updating Peminjaman...");
-            System.out.println(e);
         }
-
-        dbCon.closeConnection();
     }
 
     @Override
     public void delete(String id){
-        con = dbCon.makeConnection();
-
         String sql = "DELETE FROM peminjaman "
-                + "WHERE id_peminjaman = " + id + "";
+                + "WHERE id_peminjaman = ?";
 
         System.out.println("Deleting PeminjamanBuku...");
 
-        try{
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, id);
+            int result = statement.executeUpdate();
             System.out.println("Delete" + result + " Peminjaman" + id);
-            statement.close();
         }catch(Exception e){
             System.out.println("Error Deleting Peminjaman...");
-            System.out.println(e);
         }
-
-        dbCon.closeConnection();
     }
 
     @Override

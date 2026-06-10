@@ -1,6 +1,7 @@
 package Dao;
 import InterfaceDao.IBukuDAO;
-import java.sql.Statement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import Model.Buku;
 import Model.Novel;
 /**
@@ -15,68 +16,50 @@ public class NovelDAO extends BukuDAO implements IBukuDAO{
     }
 
     public void insertNewRole(Novel nvl) {
-        con = dbCon.makeConnection();
-
-        String sql = "INSERT INTO `novel`(`id_buku`, `cover`) VALUES ('"
-                + nvl.getId_buku()
-                + "','"
-                + nvl.getCover()
-                + "')";
+        String sql = "INSERT INTO `novel`(`id_buku`, `cover`) VALUES (?, ?)";
 
         System.out.println("Adding buku...");
 
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, nvl.getId_buku());
+            statement.setString(2, nvl.getCover());
+            int result = statement.executeUpdate();
             System.out.println("Added " + result + " buku");
-            statement.close();
         } catch (Exception e) {
             System.out.println("Error adding buku...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     public void updateRole(Buku b, String id_buku) {
-        con = dbCon.makeConnection();
-
-        String sql = "UPDATE `" + b.getJenis()
-                + "` SET `cover`='"
-                + b.getSpecial()
-                + "' WHERE `novel`.id_buku = '"
-                + id_buku
-                + "'";
+        String sql = "UPDATE `novel` SET `cover` = ? WHERE `id_buku` = ?";
 
         System.out.println("Updating Jenis buku...");
 
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, b.getSpecial());
+            statement.setString(2, id_buku);
+            int result = statement.executeUpdate();
             System.out.println("Edited " + result + " buku " + id_buku);
-            statement.close();
         } catch(Exception e) {
             System.out.println("Error Updating buku...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     @Override
     public void deleteoldRole(String id_buku) {
-        con = dbCon.makeConnection();
-        String sql = "DELETE FROM `novel` WHERE `id_buku` = '"+id_buku+"'";
+        String sql = "DELETE FROM `novel` WHERE `id_buku` = ?";
         System.out.println("Deleting novel...");
 
-        try {
-            Statement statement = con.createStatement();
-            int result = statement.executeUpdate(sql);
+        try (Connection con = dbCon.makeConnection();
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setString(1, id_buku);
+            int result = statement.executeUpdate();
             System.out.println("Edited " + result + " buku " + id_buku);
-            statement.close();
         } catch(Exception e) {
             System.out.println("Error Updating buku...");
-            System.out.println(e);
         }
-        dbCon.closeConnection();
     }
 
     public void update(Buku b, String id_buku, String cover) {
