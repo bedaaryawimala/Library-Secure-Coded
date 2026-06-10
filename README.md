@@ -49,9 +49,6 @@ The application provides a simple interface for managing library data through CR
 * JDBC
 * MySQL Connector
 * IntelliJ IDEA
-* Object-Oriented Programming
-* DAO Pattern
-* Controller Layer
 
 ## Main Concepts Implemented
 
