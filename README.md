@@ -1,6 +1,6 @@
-# Library Management System
+# Library-Secure-Coded
 
-Library Management System is a Java Swing desktop application designed to manage library data, including books, borrowers, and borrowing records. This project implements Object-Oriented Programming concepts and Object Persistence using a MySQL database.
+Library-Secure-Coded is a Java Swing desktop application designed to manage library data, including books, borrowers, and borrowing records. This version applies secure coding improvements such as prepared SQL statements, input validation, safer database connection handling, and clearer MVC separation.
 
 The application provides a simple interface for managing library data through CRUD operations, search features, and database integration using JDBC and the DAO pattern.
 
@@ -10,7 +10,7 @@ The application provides a simple interface for managing library data through CR
 
 * Add new borrower data
 * Update existing borrower data
-* Delete borrower data
+* Delete book data
 * Search borrower data
 * Display borrower records in a table
 
@@ -18,7 +18,7 @@ The application provides a simple interface for managing library data through CR
 
 * Add new book data
 * Update existing book data
-* Delete book data
+* Delete borrower data
 * Search book data
 * Manage different book types such as Novel and Comic
 
@@ -26,10 +26,20 @@ The application provides a simple interface for managing library data through CR
 
 * Add borrowing records
 * Select borrower and book data
-* Input borrowing and return dates
+* Select borrowing and return dates with a calendar picker
 * Select book genre using checkboxes
 * Select book location using radio buttons
 * Display borrowing records in a table
+
+## Secure Coding Improvements
+
+* Uses `PreparedStatement` to reduce SQL injection risk.
+* Validates input before sending data to the model and DAO layer.
+* Uses try-with-resources for database resources.
+* Reads database credentials from environment variables when available.
+* Separates UI, controller, DAO, and model responsibilities.
+* Disables update and delete actions until a table row is selected.
+* Prevents direct editing of generated book IDs.
 
 ## Built With
 
@@ -41,6 +51,7 @@ The application provides a simple interface for managing library data through CR
 * IntelliJ IDEA
 * Object-Oriented Programming
 * DAO Pattern
+* Controller Layer
 
 ## Main Concepts Implemented
 
@@ -68,12 +79,20 @@ src
 │
 ├── Controller
 │   ├── BukuController.java
+│   ├── BukuControllerE.java
+│   ├── KomikController.java
+│   ├── NovelController.java
 │   ├── PeminjamController.java
+│   ├── PeminjamControllerE.java
 │   └── PeminjamanController.java
 │
 ├── Dao
 │   ├── BukuDAO.java
+│   ├── BukuDAOE.java
+│   ├── KomikDAO.java
+│   ├── NovelDAO.java
 │   ├── PeminjamDAO.java
+│   ├── PeminjamDAOE.java
 │   └── PeminjamanDAO.java
 │
 ├── Exception
@@ -87,9 +106,13 @@ src
 │
 ├── Model
 │   ├── Buku.java
+│   ├── BukuE.java
 │   ├── Novel.java
+│   ├── NovelE.java
 │   ├── Komik.java
+│   ├── KomikE.java
 │   ├── Peminjam.java
+│   ├── PeminjamE.java
 │   └── Peminjaman.java
 │
 ├── PanelView
@@ -108,25 +131,34 @@ src
 
 The application uses a MySQL database to store and manage library data. The main tables include:
 
-* `Buku`
-* `Novel`
-* `Komik`
-* `Peminjam`
-* `Peminjaman`
+* `buku`
+* `novel`
+* `komik`
+* `peminjam`
+* `peminjaman`
 
 The `peminjaman` table stores borrowing records and connects borrower data with book data. It contains information such as borrower ID, book ID, borrowing date, return date, book genre, and book location.
 
-## Application Preview
+## Database Configuration
 
-application screenshots:
+By default, the application connects to:
 
-![Borrower Page](Screenshots/Peminjam.png)
-![Book Page](Screenshots/Buku.png)
-![Borrowing Page](Screenshots/Peminjaman.png)
+```text
+jdbc:mysql://localhost:3306/op2_tipe_b
+```
+
+Database credentials can be configured with environment variables:
+
+```text
+LIBRARY_DB_USER
+LIBRARY_DB_PASSWORD
+```
+
+If those variables are not set, the application falls back to `root` with an empty password for local development.
 
 ## Notes
 
-This project focuses on implementing Object Persistence in a desktop-based Java application. The data is not only displayed in the GUI, but also stored, retrieved, updated, and deleted from a MySQL database using JDBC and the DAO pattern.
+This project focuses on implementing Object Persistence in a desktop-based Java application while applying secure coding practices. The data is displayed in the GUI and stored, retrieved, updated, and deleted from a MySQL database using JDBC and the DAO pattern.
 
 ## Author
 
