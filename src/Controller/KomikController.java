@@ -15,14 +15,10 @@ public class KomikController {
         kDao.insert(kmk);
     }
 
-    public void insertDataKomik(Komik kmk) {
-        kDao.insert(kmk);
-    }
-
     public String showStringBuku() {
         List<Buku> listB = kDao.showData("komik");
         String bukuString = "";
-
+        
         for(Buku b : listB) {
             bukuString += b.getString() + "\n";
         }
@@ -32,13 +28,5 @@ public class KomikController {
     public void updateDataBuku(Komik K) {
         System.out.println(K.getIlustrator());
         kDao.update(K, K.getId_buku(), K.getIlustrator());
-    }
-
-    public void updateDataKomik(Buku buku, String idBuku, String ilustrator) {
-        kDao.update(buku, idBuku, ilustrator);
-    }
-
-    public void deleteRoleKomik(String idBuku) {
-        kDao.deleteoldRole(idBuku);
     }
 }

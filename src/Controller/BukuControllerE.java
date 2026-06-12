@@ -6,13 +6,9 @@ import Model.BukuE;
 public class BukuControllerE {
     BukuDAOE bDao = new BukuDAOE();
 
-
+   
     public List<BukuE> showListBuku(){
-        List<BukuE> dataBuku = bDao.showForDropdown();
+        List<BukuE> dataBuku = bDao.IShowForDropdown();
         return dataBuku;
-    }
-
-    public List<BukuE> showDataForDropdown() {
-        return showListBuku();
     }
 }

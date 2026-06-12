@@ -181,7 +181,7 @@ public class BukuMainPanel extends JPanel {
             int tahunTerbit = Integer.parseInt(inputTahunTerbit.getText().trim());
             if (jenis.equals("novel")) {
                 Novel novel = new Novel(inputCover.getText().trim(), id, inputJudul.getText().trim(), jenis, tahunTerbit);
-                novelController.insertDataBuku(novel);
+                novelController.insertDataNovel(novel);
             } else {
                 Komik komik = new Komik(inputCover.getText().trim(), id, inputJudul.getText().trim(), jenis, tahunTerbit);
                 komikController.insertDataBuku(komik);
@@ -217,7 +217,7 @@ public class BukuMainPanel extends JPanel {
 
             if (jenis.equals("novel")) {
                 Novel novel = new Novel(inputCover.getText().trim(), selectedId, inputJudul.getText().trim(), jenis, tahunTerbit);
-                novelController.updateDataBuku(novel);
+                novelController.updateDataNovel(novel, selectedId, inputCover.getText());
             } else {
                 Komik komik = new Komik(inputCover.getText().trim(), selectedId, inputJudul.getText().trim(), jenis, tahunTerbit);
                 komikController.updateDataBuku(komik);
@@ -291,6 +291,7 @@ public class BukuMainPanel extends JPanel {
         }
 
         if (selectedId != null) {
+            novelController.deleteRoleNovel(selectedId);
             bukuController.deleteDataBuku(selectedId);
             clearForm();
             loadData("");
