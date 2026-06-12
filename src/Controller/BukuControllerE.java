@@ -8,7 +8,7 @@ public class BukuControllerE {
 
    
     public List<BukuE> showListBuku(){
-        List<BukuE> dataBuku = bDao.IShowForDropdown();
+        List<BukuE> dataBuku = bDao.showForDropdown();
         return dataBuku;
     }
 }

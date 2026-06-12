@@ -4,8 +4,4 @@ import java.util.List;
 
 public interface IShowForDropdown<X> {
     public List<X> showForDropdown();
-
-    default List<X> IShowForDropdown() {
-        return showForDropdown();
-    }
 }
